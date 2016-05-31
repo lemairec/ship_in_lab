@@ -28,9 +28,9 @@ class TelecommandEvent {
 public:
     int m_xref;
     int m_yref;
-
-    bool active(){
-      return m_xref < 400 || m_xref > 600 || m_yref < 400 || m_yref > 600;
+    bool m_active;
+    void setActive(){
+      m_active = m_xref < 400 || m_xref > 600 || m_yref < 400 || m_yref > 600;
     }
 };
 TelecommandEvent telecommandEvent;
@@ -46,21 +46,33 @@ bool receiveAndSendMessage(){
     Mirf.getData((byte *)dataReceive);
     Mirf.setTADDR((byte *)"clie1");
     parse_dataReceive();
-    if(telecommandEvent.active()){
+    telecommandEvent.setActive();
+    if(telecommandEvent.m_active){
       for(size_t i = 0; i < 32; ++i){
         dataToSend[i] = '-';
       }
       dataToSend[0] = 't'; dataToSend[1] = 'e'; dataToSend[2] = 'l'; dataToSend[3] = 'e'; dataToSend[4] = 'c'; dataToSend[5] = 'o'; dataToSend[6] = 'm';
-       dataToSend[16] = 'x';
+      dataToSend[16] = 'x';
       write_int4(dataToSend, telecommandEvent.m_xref, 17);
       write_int4(dataToSend, telecommandEvent.m_yref, 22);
+      loopTelecommande();
       INFO(dataToSend);
-    } else {
-      dataToSend[0] = 'o';
     }
     Mirf.send((byte *)dataToSend);
     Serial.println("Reply sent.");
   }
+}
+
+bool receiveAndSendMessage(String s){
+  INFO(s);
+  size_t l = s.length();
+  for(size_t i = 0; i < min(l,32); ++i){
+    dataToSend[i] = s[i]; 
+  }
+  for(size_t i = l; i < 32; ++i){
+    dataToSend[i] = ' '; 
+  }
+  receiveAndSendMessage();
 }
 
 void setup(){
@@ -72,12 +84,16 @@ void setup(){
   Mirf.setRADDR((byte *)"serv1");   
   Mirf.payload = 32;
   Mirf.config();
+
+  receiveAndSendMessage("init ok");
+  
   Serial.println("Listening...");
 
+void loopTelecommande(){
   
 }
 
 void loop(){
-  receiveAndSendMessage();  
+  receiveAndSendMessage("loop");
 }
 
