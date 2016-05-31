@@ -127,8 +127,8 @@ void loop(){
     lcd.setCursor(i, 0);
     lcd.print(data[i]);
   }
-  for(int i = 17; i < 32; ++i){
-    lcd.setCursor(i, 1);
+  for(int i = 16; i < 32; ++i){
+    lcd.setCursor(i%16, 1);
     lcd.print(data[i]);
   }
   delay(1000);
