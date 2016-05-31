@@ -82,6 +82,20 @@ void write_int(char * data, int value, int i){
   data[i+3] = get_char((value)%10);
 }
 
+void printLcdTimeOut(){
+  Serial.println("Timeout on response from server!");
+  String s = "Time out";
+  size_t l = s.length();
+  for(size_t i = 0; i < min(l,32); ++i){
+    lcd.setCursor(i%16, i/16);
+    lcd.print(s[i]);
+  }
+  for(size_t i = l; i < 32; ++i){
+    lcd.setCursor(i%16, i/16);
+    lcd.print(' ');
+  }
+}
+
 void loop(){
   bool b = true;
   int turn_val= analogRead(turn_knob);
@@ -111,24 +125,21 @@ void loop(){
   }
   Serial.println("Finished sending");
   delay(10);
+  unsigned long time = millis();
   while(!Mirf.dataReady()){
     //Serial.println("Waiting");
-    /*if ( ( millis() - time ) > 1000 ) {
-      Serial.println("Timeout on response from server!");
+    if ( ( millis() - time ) > 3000 ) {
+      printLcdTimeOut();
       return;
-    }*/
+    }
   }
   
   Mirf.getData((byte *) &data);
   
   Serial.print("receive: ");
   Serial.println(data);
-  for(int i = 0; i < 16; ++i){
-    lcd.setCursor(i, 0);
-    lcd.print(data[i]);
-  }
-  for(int i = 16; i < 32; ++i){
-    lcd.setCursor(i%16, 1);
+  for(int i = 0; i < 32; ++i){
+    lcd.setCursor(i%16, i/16);
     lcd.print(data[i]);
   }
   delay(1000);
