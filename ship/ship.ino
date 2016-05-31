@@ -16,6 +16,7 @@
 
 #include "utils.h"
 #include "logging.h"
+#include "gps.h"
 #include <SPI.h>
 #include <Mirf.h>
 #include <nRF24L01.h>
@@ -23,6 +24,9 @@
 
 char dataToSend[32];
 char dataReceive[32];
+
+GpsReader gpsReader;
+GpsEvent gpsEvent;
 
 class TelecommandEvent {
 public:
@@ -51,8 +55,6 @@ bool receiveAndSendMessage(){
       for(size_t i = 0; i < 32; ++i){
         dataToSend[i] = '-';
       }
-      dataToSend[0] = 't'; dataToSend[1] = 'e'; dataToSend[2] = 'l'; dataToSend[3] = 'e'; dataToSend[4] = 'c'; dataToSend[5] = 'o'; dataToSend[6] = 'm';
-      dataToSend[16] = 'x';
       write_int4(dataToSend, telecommandEvent.m_xref, 17);
       write_int4(dataToSend, telecommandEvent.m_yref, 22);
       loopTelecommande();
@@ -88,12 +90,37 @@ void setup(){
   receiveAndSendMessage("init ok");
   
   Serial.println("Listening...");
+  gpsReader.init();
+  while(!gpsEvent.isValid()){
+    receiveAndSendMessage("wait gps");
+    if(!telecommandEvent.m_active){
+      gpsReader.readNextFrame(gpsEvent);
+    }
+  }
+  
+}
 
 void loopTelecommande(){
   
 }
 
 void loop(){
-  receiveAndSendMessage("loop");
+  if(!telecommandEvent.m_active){
+    gpsReader.readNextFrame(gpsEvent);
+    if(gpsEvent.isValid()){
+      receiveAndSendMessage();
+      char s1[40];
+      dtostrf(gpsEvent.m_latitude, 4, 8, s1);
+      char s2[40];
+      dtostrf(gpsEvent.m_longitude, 4, 8, s2);
+      for(size_t i = 0; i < 12; ++i){
+        dataToSend[i] = s1[i];
+        dataToSend[i + 16] = s2[i];
+      }
+      receiveAndSendMessage();
+      
+    }
+  }
+  //delay(3000);
 }
 
