@@ -241,4 +241,20 @@ void loop(){
     INFO(gpsEvent.m_latitude << " " << gpsEvent.m_longitude);
   }
 }
+
+#include <Arduino.h>
+
+void setup(){
+  Serial3.begin(9600);
+  Serial.begin(9600);
+}
+
+void loop(){
+  //Serial.print("loop");
+  while ( Serial3.available()){
+        char c = Serial3.read();
+        Serial.print(c);
+  }
+}
+
 */

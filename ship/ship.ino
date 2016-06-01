@@ -42,6 +42,12 @@ public:
     void setActive(){
       m_active = m_xref < 400 || m_xref > 600 || m_yref < 400 || m_yref > 600;
     }
+
+    void init(){
+      m_xref = 500;
+      m_yref = 500;
+      m_active = false;
+    }
 };
 TelecommandEvent telecommandEvent;
 
@@ -88,9 +94,11 @@ void setup(){
   Mirf.setRADDR((byte *)"serv1");   
   Mirf.payload = 32;
   Mirf.config();
-
-  receiveAndSendMessage("init ok");
   
+  receiveAndSendMessage("init ok");
+  telecommandEvent.init();
+  INFO("telecommande " << telecommandEvent.m_xref);
+
   Serial.println("Listening...");
 
   receiveAndSendMessage("gps init");
@@ -113,6 +121,8 @@ void setup(){
     receiveAndSendMessage("wait gps");
     if(!telecommandEvent.m_active){
       gpsReader.readNextFrame(gpsEvent);
+    } else {
+      INFO("telecommande " << telecommandEvent.m_xref);
     }
   }
 }
@@ -152,7 +162,7 @@ void loop(){
         angle = angle + 360;
       }
 
-      INFO(angle << " " << bearing << " " << movingEvent.m_angle);
+      
       
 
       dataToSend[0] = 'w';
@@ -164,7 +174,8 @@ void loop(){
 
       dataToSend[24] = 'a';
       write_int5(dataToSend, angle, 26);
-  
+
+      INFO("d " << movingEvent.m_distance << " a " << angle);
       receiveAndSendMessage();
     }
   } else {
