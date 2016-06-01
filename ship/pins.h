@@ -7,3 +7,5 @@
 
 #define GPS_TX_PIN            2
 #define GPS_RX_PIN            3
+
+#define DETECTEUR             A0

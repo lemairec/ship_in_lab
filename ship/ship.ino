@@ -15,6 +15,7 @@
  */
 
 #include "utils.h"
+#include "pins.h"
 #include "logging.h"
 #include "gps.h"
 #include "compass.h"
@@ -58,8 +59,8 @@ bool receiveAndSendMessage(){
     telecommandEvent.setActive();
     if(telecommandEvent.m_active){
       empty_data(dataToSend, 32);
-      write_uint4(dataToSend, telecommandEvent.m_xref, 17);
-      write_uint4(dataToSend, telecommandEvent.m_yref, 22);
+      write_uint4(dataToSend, telecommandEvent.m_xref, 0);
+      write_uint4(dataToSend, telecommandEvent.m_yref, 5);
       loopTelecommande();
       INFO(dataToSend);
     }
@@ -121,6 +122,10 @@ void loopTelecommande(){
 }
 
 void loop(){
+  if(analogRead(DETECTEUR) > 300){
+    receiveAndSendMessage("obstacle");
+    return;
+  }
   if(!telecommandEvent.m_active){
     empty_data(dataToSend, 32);
     gpsReader.readNextFrame(gpsEvent);
@@ -162,7 +167,9 @@ void loop(){
   
       receiveAndSendMessage();
     }
-  }
+  } else {
+      receiveAndSendMessage();
+    }
   //delay(3000);
 }
 
