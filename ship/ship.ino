@@ -17,6 +17,8 @@
 #include "utils.h"
 #include "logging.h"
 #include "gps.h"
+#include "compass.h"
+#include "moving_waypoint.h"
 #include <SPI.h>
 #include <Mirf.h>
 #include <nRF24L01.h>
@@ -27,6 +29,9 @@ char dataReceive[32];
 
 GpsReader gpsReader;
 GpsEvent gpsEvent;
+
+MovingWaypoint movingWayPoint;
+MovingEvent movingEvent;
 
 class TelecommandEvent {
 public:
@@ -52,11 +57,9 @@ bool receiveAndSendMessage(){
     parse_dataReceive();
     telecommandEvent.setActive();
     if(telecommandEvent.m_active){
-      for(size_t i = 0; i < 32; ++i){
-        dataToSend[i] = '-';
-      }
-      write_int4(dataToSend, telecommandEvent.m_xref, 17);
-      write_int4(dataToSend, telecommandEvent.m_yref, 22);
+      empty_data(dataToSend, 32);
+      write_uint4(dataToSend, telecommandEvent.m_xref, 17);
+      write_uint4(dataToSend, telecommandEvent.m_yref, 22);
       loopTelecommande();
       INFO(dataToSend);
     }
@@ -67,12 +70,10 @@ bool receiveAndSendMessage(){
 
 bool receiveAndSendMessage(String s){
   INFO(s);
+  empty_data(dataToSend, 32);
   size_t l = s.length();
   for(size_t i = 0; i < min(l,32); ++i){
     dataToSend[i] = s[i]; 
-  }
-  for(size_t i = l; i < 32; ++i){
-    dataToSend[i] = ' '; 
   }
   receiveAndSendMessage();
 }
@@ -90,14 +91,29 @@ void setup(){
   receiveAndSendMessage("init ok");
   
   Serial.println("Listening...");
+
+  receiveAndSendMessage("gps init");
   gpsReader.init();
+
+  compass_x_offset = -210.88;
+  compass_y_offset = 126.20;
+  compass_z_offset = 361.92;
+  compass_x_gainError = 1.12;
+  compass_y_gainError = 1.13;
+  compass_z_gainError = 1.03;
+  receiveAndSendMessage("compass init");
+  compass_init(2);
+  compass_debug = 1;
+
+  receiveAndSendMessage("compass calibration");
+  //compass_offset_calibration(3);
+  
   while(!gpsEvent.isValid()){
     receiveAndSendMessage("wait gps");
     if(!telecommandEvent.m_active){
       gpsReader.readNextFrame(gpsEvent);
     }
   }
-  
 }
 
 void loopTelecommande(){
@@ -106,19 +122,45 @@ void loopTelecommande(){
 
 void loop(){
   if(!telecommandEvent.m_active){
+    empty_data(dataToSend, 32);
     gpsReader.readNextFrame(gpsEvent);
     if(gpsEvent.isValid()){
-      receiveAndSendMessage();
-      char s1[40];
+      /*char s1[40];
       dtostrf(gpsEvent.m_latitude, 4, 8, s1);
       char s2[40];
       dtostrf(gpsEvent.m_longitude, 4, 8, s2);
       for(size_t i = 0; i < 12; ++i){
         dataToSend[i] = s1[i];
         dataToSend[i + 16] = s2[i];
+      }*/
+
+      compass_scalled_reading();
+      compass_heading();
+
+      movingWayPoint.getMovingEvent(gpsEvent, movingEvent);
+
+      int angle = bearing - movingEvent.m_angle;
+      if(angle > 180){
+        angle = angle - 360;
       }
-      receiveAndSendMessage();
+      if(angle < -180){
+        angle = angle + 360;
+      }
+
+      INFO(angle << " " << bearing << " " << movingEvent.m_angle);
       
+
+      dataToSend[0] = 'w';
+      dataToSend[1] = 'p';
+      write_uint4(dataToSend, movingEvent.m_waypoint_no, 4);
+
+      dataToSend[16] = 'd';
+      write_uint4(dataToSend, movingEvent.m_distance, 18);
+
+      dataToSend[24] = 'a';
+      write_int5(dataToSend, angle, 26);
+  
+      receiveAndSendMessage();
     }
   }
   //delay(3000);
