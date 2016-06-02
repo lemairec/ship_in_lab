@@ -18,14 +18,13 @@ bool GpsEvent::isValid(){
 }
 
 GpsReader::GpsReader()
-    :m_lastFix(0),
-    m_serial(GPS_TX_PIN, GPS_RX_PIN)
+    :m_lastFix(0)
 {
     resetBuffer();
 }
 
 void GpsReader::init(){
-    m_serial.begin(9600);
+    Serial3.begin(9600);
 }
 
 void GpsReader::resetBuffer(){
@@ -184,8 +183,8 @@ void GpsReader::parseBuffer(){
 
 bool GpsReader::readNextFrame(GpsEvent & gpsEvent){
     gpsEvent.reset();
-    while ( m_serial.available()){
-        char c = m_serial.read();
+    while ( Serial3.available()){
+        char c = Serial3.read();
         //INFO(c);
         if(this->readChar(c)){
             gpsEvent.m_latitude = m_lastLatitude;

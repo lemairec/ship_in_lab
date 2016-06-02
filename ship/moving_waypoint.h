@@ -11,7 +11,7 @@ public:
   double m_latitude;
 };
 
-class MovingEvent {
+class MovingWaypointEvent {
 public:
   int m_waypoint_no;
   double m_distance;
@@ -20,7 +20,7 @@ public:
 
 class MovingWaypoint {
 public:
-  void getMovingEvent(GpsEvent & event, MovingEvent & movingEvent);
+  void getMovingEvent(GpsEvent & event, MovingWaypointEvent & movingEvent);
 };
 
 

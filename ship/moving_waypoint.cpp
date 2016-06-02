@@ -22,7 +22,7 @@ Waypoint::Waypoint(double longitude, double latitude)
 }
 
 
-void MovingWaypoint::getMovingEvent(GpsEvent & event, MovingEvent & movingEvent){
+void MovingWaypoint::getMovingEvent(GpsEvent & event, MovingWaypointEvent & movingEvent){
     if(waypointNumber > NUMBER_WAYPOINTS){
         movingEvent.m_distance = 0;
         movingEvent.m_angle = 0;

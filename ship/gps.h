@@ -28,7 +28,6 @@ class GpsReader {
     
   
 
-    SoftwareSerial m_serial;
 public:
     double m_lastLatitude;
     double m_lastLongitude;
