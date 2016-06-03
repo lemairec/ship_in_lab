@@ -20,9 +20,9 @@
 #include "gps.h"
 #include "compass.h"
 #include "moving_waypoint.h"
+#include "move.h"
 #include <SPI.h>
 #include <Mirf.h>
-#include <Servo.h>
 #include <nRF24L01.h>
 #include <MirfHardwareSpiDriver.h>
 
@@ -32,17 +32,8 @@ char dataReceive[32];
 GpsReader gpsReader;
 GpsEvent gpsEvent;
 
-int angle_servo;
-Servo servo;
-
 MovingWaypoint movingWayPoint;
 MovingWaypointEvent movingWaypointEvent;
-
-class MovingEvent{
-public:
-  int m_angle;
-  int m_vitesse;
-};
 MovingEvent movingEvent;
 
 class TelecommandEvent {
@@ -75,10 +66,6 @@ bool receiveAndSendMessage(){
     parse_dataReceive();
     telecommandEvent.setActive();
     if(telecommandEvent.m_active){
-      empty_data(dataToSend, 32);
-      write_uint4(dataToSend, telecommandEvent.m_xref, 0);
-      write_uint4(dataToSend, telecommandEvent.m_yref, 5);
-      INFO("telecommande " << telecommandEvent.m_xref);
       loopTelecommande();
       
       INFO(dataToSend);
@@ -89,7 +76,7 @@ bool receiveAndSendMessage(){
 }
 
 bool receiveAndSendMessage(String s){
-  INFO(s);
+  //INFO(s);
   empty_data(dataToSend, 32);
   size_t l = s.length();
   for(size_t i = 0; i < min(l,32); ++i){
@@ -107,8 +94,6 @@ void setup(){
   Mirf.setRADDR((byte *)"serv1");   
   Mirf.payload = 32;
   Mirf.config();
-
-  servo.attach(7);
   
   receiveAndSendMessage("init ok");
   telecommandEvent.init();
@@ -118,6 +103,8 @@ void setup(){
 
   receiveAndSendMessage("gps init");
   gpsReader.init();
+
+  moveInit();
 
   compass_x_offset = -210.88;
   compass_y_offset = 126.20;
@@ -138,28 +125,30 @@ void setup(){
       gpsReader.readNextFrame(gpsEvent);
       movingEvent.m_angle = 0;
       movingEvent.m_vitesse = 0;
-      move_();
+      movingEvent.stop();
+      moveRobot(movingEvent);
     }
   }
   receiveAndSendMessage("gps ok");
 }
 
 void loopTelecommande(){
-  movingEvent.m_angle = map(telecommandEvent.m_xref, 0, 1024, -180, 180);
+  empty_data(dataToSend, 32);
+  dataToSend[0] = 't';
+  dataToSend[2] = 'x';
+  write_uint4(dataToSend, telecommandEvent.m_xref, 4);
+  dataToSend[9] = 'y';
+  write_uint4(dataToSend, telecommandEvent.m_yref, 11);
+  INFO("telecommande " << telecommandEvent.m_xref);
+      
+  
+  movingEvent.m_angle = map(telecommandEvent.m_xref, 0, 1024, -90, 90);
   movingEvent.m_vitesse = map(telecommandEvent.m_yref, 0, 1024, -100, 100);
-  move_();
-}
-
-void move_(){
-  if(movingEvent.m_angle < -90){
-    angle_servo = -90;
-  } else if(movingEvent.m_angle > 90){
-    angle_servo = 90;
-  } else {
-    angle_servo = movingEvent.m_angle;
-  }
-  angle_servo += 90;
-  servo.write(angle_servo);
+  dataToSend[16] = 'a';
+  write_int5(dataToSend, movingEvent.m_angle, 18);
+  dataToSend[24] = 'v';
+  write_int5(dataToSend, movingEvent.m_vitesse, 26);
+  moveRobot(movingEvent);
 }
 
 void loop(){
@@ -182,7 +171,8 @@ void loop(){
 
       movingWayPoint.getMovingEvent(gpsEvent, movingWaypointEvent);
 
-      movingEvent.m_angle = bearing - movingEvent.m_angle;
+      INFO(bearing << " " << movingWaypointEvent.m_angle);
+      movingEvent.m_angle = bearing - movingWaypointEvent.m_angle;
       if(movingEvent.m_angle > 180){
         movingEvent.m_angle -= 360;
       }
@@ -206,12 +196,12 @@ void loop(){
       INFO("d " << movingWaypointEvent.m_distance << " a " << movingEvent.m_angle);
       receiveAndSendMessage();
 
-      move_();
+      moveRobot(movingEvent);
       //servo.write(angle_servo);
     }
   } else {
-      receiveAndSendMessage();
-    }
+    receiveAndSendMessage();
+  }
     
   //delay(3000);
 }
