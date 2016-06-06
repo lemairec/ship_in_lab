@@ -53,25 +53,25 @@ void moveLeftRight(MovingEvent & movingEvent){
   int right = 0;
   if(movingEvent.m_vitesse > 0){
     if(movingEvent.m_angle < 0){
-      left = 60;
-      int angle = min(-movingEvent.m_angle, 40);
-      right = 60 - angle;      
+      left = 100;
+      int angle = min(-movingEvent.m_angle, 60);
+      right = 100 - angle;      
     } else {
-      right = 60;
-      int angle = min(movingEvent.m_angle, 40);
-      left = 60 - angle;
+      right = 100;
+      int angle = min(movingEvent.m_angle, 60);
+      left = 100 - angle;
     }
     left = left * movingEvent.m_vitesse / 100;
     right = right * movingEvent.m_vitesse / 100;
   } else {
     if(movingEvent.m_angle < 0){
-      left = -60;
-      int angle = min(-movingEvent.m_angle, 40);
-      right = -60 + angle;      
+      left = -100;
+      int angle = min(-movingEvent.m_angle, 60);
+      right = -100 + angle;      
     } else {
-      right = -60;
-      int angle = min(movingEvent.m_angle, 40);
-      left = -60 + angle;
+      right = -100;
+      int angle = min(movingEvent.m_angle, 60);
+      left = -100 + angle;
     }
     left = left * -movingEvent.m_vitesse/ 100;
     right = right * -movingEvent.m_vitesse/ 100;

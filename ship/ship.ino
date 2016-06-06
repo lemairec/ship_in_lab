@@ -70,8 +70,12 @@ bool receiveAndSendMessage(){
       
       INFO(dataToSend);
     }
+    Serial.print("send ");
+    for(size_t i = 0; i < 32; ++i){
+      Serial.print(dataToSend[i]); 
+    }
     Mirf.send((byte *)dataToSend);
-    Serial.println("Reply sent.");
+    Serial.print("\n");
   }
 }
 
@@ -106,9 +110,10 @@ void setup(){
 
   moveInit();
 
-  compass_x_offset = -210.88;
-  compass_y_offset = 126.20;
-  compass_z_offset = 361.92;
+  compass_x_offset = -90.64;
+  compass_y_offset = 175.71;
+  compass_z_offset = 155.20;
+
   compass_x_gainError = 1.12;
   compass_y_gainError = 1.13;
   compass_z_gainError = 1.03;
@@ -179,6 +184,7 @@ void loop(){
       if(movingEvent.m_angle < -180){
         movingEvent.m_angle += 360;
       }
+      movingEvent.m_angle = - movingEvent.m_angle;
 
       
       
@@ -195,7 +201,8 @@ void loop(){
 
       INFO("d " << movingWaypointEvent.m_distance << " a " << movingEvent.m_angle);
       receiveAndSendMessage();
-
+      movingEvent.m_vitesse = 100;
+    
       moveRobot(movingEvent);
       //servo.write(angle_servo);
     }

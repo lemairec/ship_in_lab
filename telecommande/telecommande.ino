@@ -142,7 +142,7 @@ void loop(){
     lcd.setCursor(i%16, i/16);
     lcd.print(data[i]);
   }
-  delay(1000);
+  delay(250);
 } 
   
   
