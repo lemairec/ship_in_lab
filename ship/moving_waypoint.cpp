@@ -4,14 +4,13 @@
 
 
 #define WAYPOINT_DIST_TOLERANE  2   // tolerance in meters to waypoint; once within this tolerance, will advance to the next waypoint
-#define NUMBER_WAYPOINTS 5          // enter the numebr of way points here (will run from 0 to (n-1))
+#define NUMBER_WAYPOINTS 4          // enter the numebr of way points here (will run from 0 to (n-1))
 int waypointNumber = 0;            // current waypoint number; will run from 0 to (NUMBER_WAYPOINTS -1); start at -1 and gets initialized during setup()
 Waypoint waypointList[NUMBER_WAYPOINTS] = {
-    Waypoint(3.398085, 49.03748) 
-    , Waypoint(3.398278, 49.037558)
-    , Waypoint(3.4082915783, 49.0403060913)
-    , Waypoint(3.4079160690, 49.0402221680)
-    , Waypoint(3.4080543518, 49.0402641296)
+    Waypoint(3.398297, 49.037537) 
+    , Waypoint(3.398010, 49.037481)
+    , Waypoint(3.398084, 49.037340)
+    , Waypoint(3.398010, 49.037481)
 };
 
 
@@ -26,6 +25,7 @@ void MovingWaypoint::getMovingEvent(GpsEvent & event, MovingWaypointEvent & movi
     if(waypointNumber > NUMBER_WAYPOINTS){
         movingEvent.m_distance = 0;
         movingEvent.m_angle = 0;
+        waypointNumber = 0;
         return;
     }
     Waypoint & targetWaypoint = waypointList[waypointNumber];
